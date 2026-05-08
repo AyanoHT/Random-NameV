@@ -3,38 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tạo Tên Ngẫu Nhiên</title>
+    <title>Trình Tạo Định Danh - Hệ Thống</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { background: #f1f5f9; font-family: 'Inter', sans-serif; }
-        .main-card { background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-        .user-badge { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
-        .row-item { border-bottom: 1px solid #f1f5f9; transition: all 0.2s; }
-        .row-item:hover { background-color: #f8fafc; }
-        .row-item:last-child { border-bottom: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { background: #f0f2f5; font-family: 'Inter', sans-serif; color: #1e293b; }
+        .glass-card { background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; }
+        .identity-card {
+            transition: all 0.2s ease;
+            animation: popIn 0.3s ease-out forwards;
+            opacity: 0;
+        }
+        .identity-card:hover { border-color: #6366f1; transform: translateY(-2px); background: #f8faff; }
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
-<body class="p-6">
+<body class="flex items-center justify-center min-h-screen p-4 py-10">
 
-    <div class="max-w-2xl mx-auto">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-extrabold text-slate-800 tracking-tight">Tạo Tên Ngẫu Nhiên</h1>
-            <div class="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-                <input type="number" id="quantity-input" min="1" max="100" value="10" 
-                       class="w-12 text-center font-bold text-blue-600 focus:outline-none bg-transparent">
-                <button onclick="generateList()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-bold text-sm transition-all active:scale-95">
+    <div class="glass-card p-6 md:p-8 rounded-[2rem] w-full max-w-5xl">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-8 gap-6">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-800">Trình Tạo Định Danh</h1>
+                <p class="text-slate-500 text-sm">Phong cách nick tương tác (TDS)</p>
+            </div>
+            
+            <div class="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-200">
+                <div class="flex flex-col pl-3">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Số lượng</span>
+                    <input type="number" id="quantity-input" min="1" max="100" value="10" 
+                           class="w-20 bg-transparent border-none focus:ring-0 font-bold text-indigo-600 text-lg">
+                </div>
+                
+                <button onclick="generateList()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-lg active:scale-95 flex items-center gap-2">
                     TẠO MỚI ⚡
                 </button>
             </div>
         </div>
 
-        <div class="main-card border border-slate-200 overflow-hidden">
-            <div id="results-container"></div>
-        </div>
+        <div id="results-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-3 min-h-[100px]"></div>
     </div>
 
-    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-semibold hidden shadow-xl z-50"></div>
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-800/95 backdrop-blur text-white px-6 py-3 rounded-2xl text-sm font-semibold hidden shadow-2xl z-50"></div>
 
     <script>
         const dsHo = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "An", "Vương", "Trịnh", "Lương", "Mai", "Đào", "Đoàn", "Lâm", "Phùng", "Tống", "Trương", "Hứa", "Trình", "Tạ", "Hà", "Cao"];
@@ -57,47 +69,59 @@
             const h = removeVietnameseTones(ho);
             const d = removeVietnameseTones(dem);
             const t = removeVietnameseTones(ten);
+            const hVT = h.charAt(0);
+            const dVT = d.charAt(0);
 
-            // KIỂU MỚI: Chỉ viết tắt 1 phần (Họ hoặc Đệm), phần còn lại giữ nguyên
-            const styles = [
-                `${h.charAt(0)}${d}${t}`, // h.vankha -> hvankha
-                `${h}${d.charAt(0)}${t}`, // hoang.v.kha -> hoangvkha
-                `${h}${t}`                // hoangkha (bỏ đệm)
+            // Tiền tố ngẫu nhiên (ví dụ: ktp, m2g, v3s...)
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            const randomPre = chars[Math.floor(Math.random() * 26)] + (Math.random() > 0.5 ? Math.floor(Math.random() * 10) : chars[Math.floor(Math.random() * 26)]) + chars[Math.floor(Math.random() * 26)];
+
+            // Hậu tố ngẫu nhiên (số hoặc mã ngắn)
+            const suffix = Math.random() > 0.4 ? Math.floor(Math.random() * 8999 + 1000) : Math.floor(Math.random() * 99) + chars[Math.floor(Math.random() * 26)] + chars[Math.floor(Math.random() * 26)];
+
+            // Logic random viết tắt Họ hoặc Đệm
+            const nameStyles = [
+                `${hVT}${dVT}${t}`,     // nvt_nam
+                `${h}${dVT}${t}`,       // nguyenvnam
+                `${hVT}${d}${t}`,       // nvannam
+                `${h}${d}${t}`          // nguyenvannam
+            ];
+            const baseName = nameStyles[Math.floor(Math.random() * nameStyles.length)];
+
+            // Layout username cuối cùng
+            const finalStyles = [
+                `${baseName}${suffix}`,
+                `${randomPre}_${baseName}`,
+                `${baseName}_${randomPre}`,
+                `${baseName}.${suffix}`
             ];
             
-            let namePart = styles[Math.floor(Math.random() * styles.length)];
-
-            // Tiền tố ngẫu nhiên thoáng hơn
-            const chars = 'abefghiklmnopqrstxyz';
-            const pre = chars[Math.floor(Math.random() * chars.length)] + (Math.floor(Math.random() * 8) + 2) + chars[Math.floor(Math.random() * chars.length)];
-            const suffix = Math.floor(Math.random() * 8999 + 1000);
-
-            // Tạo username ngẫu nhiên giữa kiểu có tiền tố hoặc hậu tố
-            let user = Math.random() > 0.5 ? `${pre}_${namePart}` : `${namePart}${suffix}`;
-            
-            // Fix các cụm từ nhạy cảm
-            user = user.replace(/dm/g, "dn").replace(/vl/g, "vn").replace(/cl/g, "ck").replace(/cc/g, "cn");
-
+            const user = finalStyles[Math.floor(Math.random() * finalStyles.length)];
             return { fullName, user };
         }
 
         function generateList() {
-            const count = parseInt(document.getElementById('quantity-input').value) || 10;
+            let count = parseInt(document.getElementById('quantity-input').value);
+            if (isNaN(count) || count < 1) count = 1;
+            if (count > 100) count = 100;
+            
             const container = document.getElementById('results-container');
             container.innerHTML = ''; 
 
             for (let i = 0; i < count; i++) {
                 const data = createIdentity();
                 const div = document.createElement('div');
-                div.className = "row-item flex items-center justify-between p-4 cursor-pointer";
-                div.onclick = () => copyValue(data.user);
+                div.className = "identity-card flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200 shadow-sm";
+                div.style.animationDelay = `${i * 0.02}s`;
+                
                 div.innerHTML = `
-                    <div class="flex flex-col">
-                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Họ và tên</span>
-                        <span class="text-sm font-semibold text-slate-700">${data.fullName}</span>
+                    <div class="cursor-pointer active:scale-95 transition-transform" onclick="copyValue('${data.fullName}')">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Họ Tên</p>
+                        <p class="font-bold text-slate-700">${data.fullName}</p>
                     </div>
-                    <div class="text-right">
-                        <span class="user-badge px-3 py-1 rounded-md text-xs font-mono font-bold tracking-tight">@${data.user}</span>
+                    <div class="text-right cursor-pointer active:scale-95 transition-transform" onclick="copyValue('${data.user}')">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Username</p>
+                        <p class="font-mono text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-1 rounded-lg">@${data.user}</p>
                     </div>
                 `;
                 container.appendChild(div);
@@ -107,11 +131,12 @@
         function copyValue(text) {
             navigator.clipboard.writeText(text).then(() => {
                 const toast = document.getElementById('toast');
-                toast.innerHTML = `✅ Đã chép: <span class="text-green-400 ml-1 font-mono">${text}</span>`;
+                toast.innerHTML = `📋 Đã chép: <span class="ml-2 text-indigo-300">${text}</span>`;
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 1500);
             });
         }
+
         window.onload = generateList;
     </script>
 </body>
